@@ -22,7 +22,7 @@ const config = getDefaultConfig({
   appName: 'zkPay',
   projectId: 'YOUR_PROJECT_ID', // Get from https://cloud.reown.com
   chains: [mainnet, polygon, optimism, arbitrum, base],
-  ssr: true, // If your dApp uses server side rendering (SSR)
+  ssr: false, // Disable SSR to prevent hydration issues
 });
 
 const queryClient = new QueryClient();

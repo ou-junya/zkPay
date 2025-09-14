@@ -2,6 +2,7 @@
 
 import { Shield, Lock, Zap, Code, Github, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AboutPage() {
   return (
@@ -9,7 +10,7 @@ export default function AboutPage() {
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between p-6 lg:px-8">
         <Link href="/" className="flex items-center space-x-2">
-          <Shield className="h-8 w-8 text-purple-400" />
+          <Image src="/jpyc.svg" alt="JPYC" width={32} height={32} className="text-purple-400" />
           <span className="text-2xl font-bold text-white">zkPay</span>
         </Link>
         <div className="flex space-x-6">
@@ -210,7 +211,7 @@ export default function AboutPage() {
             className="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
           >
             <Shield className="h-5 w-5" />
-            <span>プライベートウォレットを開始</span>
+            <span>プライベートウォレット</span>
           </Link>
         </div>
       </div>

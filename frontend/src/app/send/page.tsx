@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Shield, ArrowRight, AlertCircle, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SendPage() {
   const [recipient, setRecipient] = useState('');
@@ -40,7 +41,7 @@ export default function SendPage() {
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between p-6 lg:px-8">
         <Link href="/" className="flex items-center space-x-2">
-          <Shield className="h-8 w-8 text-purple-400" />
+          <Image src="/jpyc.svg" alt="JPYC" width={32} height={32} className="text-purple-400" />
           <span className="text-2xl font-bold text-white">zkPay</span>
         </Link>
         <div className="flex space-x-6">
