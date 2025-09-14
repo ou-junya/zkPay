@@ -19,13 +19,13 @@ export function Navigation({ className = '' }: NavigationProps) {
       <div className="flex items-center space-x-6">
         <div className="hidden md:flex space-x-6">
           <Link href="/wallet" className="text-gray-300 hover:text-white transition-colors">
-            ウォレット
+            Wallet
           </Link>
           <Link href="/send" className="text-gray-300 hover:text-white transition-colors">
-            送金
+            Send
           </Link>
           <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
-            について
+            Abount
           </Link>
         </div>
         <WalletConnectButton />
