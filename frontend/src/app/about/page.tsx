@@ -105,37 +105,6 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Security */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 border border-white/20">
-          <h2 className="text-2xl font-bold text-white mb-6">セキュリティ</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-3">監査済みコントラクト</h3>
-              <p className="text-gray-300 mb-4">
-                すべてのスマートコントラクトは複数のセキュリティ会社による
-                厳格な監査を受けています。
-              </p>
-              <ul className="text-gray-300 text-sm space-y-1">
-                <li>• トレイル・オブ・ビッツ監査済み</li>
-                <li>• Halborn監査済み</li>
-                <li>• オープンソース実装</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-3">暗号学的証明</h3>
-              <p className="text-gray-300 mb-4">
-                数学的に証明可能なセキュリティモデルを採用。
-                プライバシーと検証可能性を両立します。
-              </p>
-              <ul className="text-gray-300 text-sm space-y-1">
-                <li>• グロス16証明システム</li>
-                <li>• 信頼できるセットアップ</li>
-                <li>• 量子耐性アルゴリズム</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
         {/* Legal & Compliance */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 border border-white/20">
           <h2 className="text-2xl font-bold text-white mb-6">法的コンプライアンス</h2>

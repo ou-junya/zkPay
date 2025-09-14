@@ -16,27 +16,27 @@ export default function WalletPage() {
     { symbol: 'ETH', name: 'Ethereum', balance: '2.5', shieldedBalance: '1.8' },
   ];
 
-  const transactions = [
+    const transactions = [
     {
       id: '1',
       type: 'shield',
       amount: '10,000 JPYC',
       status: 'confirmed',
-      timestamp: '2024-01-15 14:30',
+      timestamp: '2025-09-15 16:45',
     },
     {
       id: '2',
       type: 'send',
       amount: '5,000 JPYC',
       status: 'confirmed',
-      timestamp: '2024-01-15 12:15',
+      timestamp: '2025-09-15 08:30',
     },
     {
       id: '3',
       type: 'receive',
       amount: '25,000 JPYC',
       status: 'confirmed',
-      timestamp: '2024-01-14 09:45',
+      timestamp: '2025-09-13 15:20',
     },
   ];
 
