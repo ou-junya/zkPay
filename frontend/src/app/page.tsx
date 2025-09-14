@@ -3,28 +3,13 @@
 import { Shield, Zap, Eye, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Navigation } from '@/components/Navigation';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between p-6 lg:px-8">
-        <div className="flex items-center space-x-2">
-          <Image src="/jpyc.svg" alt="JPYC" width={32} height={32} className="text-purple-400" />
-          <span className="text-2xl font-bold text-white">zkPay</span>
-        </div>
-        <div className="flex space-x-6">
-          <Link href="/wallet" className="text-gray-300 hover:text-white transition-colors">
-            ウォレット
-          </Link>
-          <Link href="/send" className="text-gray-300 hover:text-white transition-colors">
-            送金
-          </Link>
-          <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
-            について
-          </Link>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Hero Section */}
       <div className="relative z-10 px-6 lg:px-8">

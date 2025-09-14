@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/components/Web3Provider";
-import ClientOnly from "@/components/ClientOnly";
+import { NotificationContainer } from "@/components/NotificationContainer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +30,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ClientOnly fallback={<div>{children}</div>}>
-          <Web3Provider>
-            {children}
-          </Web3Provider>
-        </ClientOnly>
+        <Web3Provider>
+          {children}
+          <NotificationContainer />
+        </Web3Provider>
       </body>
     </html>
   );

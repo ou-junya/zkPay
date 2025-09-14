@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Shield, ArrowRight, AlertCircle, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Navigation } from '@/components/Navigation';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
 
 export default function SendPage() {
   const [recipient, setRecipient] = useState('');
@@ -11,12 +12,10 @@ export default function SendPage() {
   const [selectedToken, setSelectedToken] = useState('JPYC');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: form, 2: confirm, 3: processing, 4: success
+  const { balances, isConnected } = useTokenBalances();
 
-  const tokens = [
-    { symbol: 'JPYC', name: 'JPY Coin', balance: '75,000' },
-    { symbol: 'USDC', name: 'USD Coin', balance: '850.25' },
-    { symbol: 'ETH', name: 'Ethereum', balance: '1.8' },
-  ];
+  // シールド残高（ダミーデータ）
+  const jpycShieldedBalance = '75,000';
 
   const handleSend = async () => {
     setStep(3);
@@ -36,26 +35,28 @@ export default function SendPage() {
     setSelectedToken('JPYC');
   };
 
+  const selectedTokenBalance = jpycShieldedBalance;
+  const selectedTokenData = balances.find(token => token.symbol === selectedToken);
+
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <Navigation />
+        <div className="relative z-10 max-w-2xl mx-auto px-6 lg:px-8 pb-24 pt-32">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 text-center">
+            <Shield className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-4">ウォレットを接続してください</h2>
+            <p className="text-gray-400 mb-6">送金機能を使用するには、まずウォレットを接続する必要があります。</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between p-6 lg:px-8">
-        <Link href="/" className="flex items-center space-x-2">
-          <Image src="/jpyc.svg" alt="JPYC" width={32} height={32} className="text-purple-400" />
-          <span className="text-2xl font-bold text-white">zkPay</span>
-        </Link>
-        <div className="flex space-x-6">
-          <Link href="/wallet" className="text-gray-300 hover:text-white transition-colors">
-            ウォレット
-          </Link>
-          <Link href="/send" className="text-purple-400 font-semibold">
-            送金
-          </Link>
-          <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
-            について
-          </Link>
-        </div>
-      </nav>
+      <Navigation />
 
       <div className="relative z-10 max-w-2xl mx-auto px-6 lg:px-8 pb-24">
         <div className="mb-8">
@@ -110,9 +111,9 @@ export default function SendPage() {
                     onChange={(e) => setSelectedToken(e.target.value)}
                     className="w-full px-4 py-3 bg-black/30 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-400"
                   >
-                    {tokens.map((token) => (
+                    {balances.map((token) => (
                       <option key={token.symbol} value={token.symbol} className="bg-slate-800">
-                        {token.symbol} (残高: {token.balance})
+                        {token.symbol} (シールド残高: {jpycShieldedBalance})
                       </option>
                     ))}
                   </select>
@@ -131,6 +132,23 @@ export default function SendPage() {
                 </div>
               </div>
 
+              <div className="bg-black/20 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">使用可能残高:</span>
+                  <span className="text-white font-semibold">
+                    {selectedTokenBalance} {selectedToken}
+                  </span>
+                </div>
+                {selectedTokenData && (
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-gray-400">パブリック残高:</span>
+                    <span className="text-white">
+                      {selectedTokenData.formatted} {selectedToken}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="h-5 w-5 text-yellow-400 mt-0.5" />
@@ -143,8 +161,8 @@ export default function SendPage() {
 
               <button
                 onClick={() => setStep(2)}
-                disabled={!recipient || !amount}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                disabled={!recipient || !amount || Number(amount) <= 0}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <span>内容を確認</span>
                 <ArrowRight className="h-5 w-5" />

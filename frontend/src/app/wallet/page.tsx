@@ -1,22 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, Wallet, Copy, Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Plus } from 'lucide-react';
+import { Shield, Wallet, Copy, Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Plus, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Navigation } from '@/components/Navigation';
+import { WalletStatus } from '@/components/WalletStatus';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
 
 export default function WalletPage() {
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [selectedToken, setSelectedToken] = useState('JPYC');
+  const { balances, isLoading } = useTokenBalances();
 
-  // Mock data - in real app this would come from RAILGUN
-  const tokens = [
-    { symbol: 'JPYC', name: 'JPY Coin', balance: '150,000', shieldedBalance: '75,000' },
-    { symbol: 'USDC', name: 'USD Coin', balance: '1,250.50', shieldedBalance: '850.25' },
-    { symbol: 'ETH', name: 'Ethereum', balance: '2.5', shieldedBalance: '1.8' },
-  ];
+  // シールド残高（ダミーデータ）
+  const jpycShieldedBalance = '75,000';
 
-    const transactions = [
+  const transactions = [
     {
       id: '1',
       type: 'shield',
@@ -40,28 +39,10 @@ export default function WalletPage() {
     },
   ];
 
-  const selectedTokenData = tokens.find(token => token.symbol === selectedToken);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between p-6 lg:px-8">
-        <Link href="/" className="flex items-center space-x-2">
-          <Image src="/jpyc.svg" alt="JPYC" width={32} height={32} className="text-purple-400" />
-          <span className="text-2xl font-bold text-white">zkPay</span>
-        </Link>
-        <div className="flex space-x-6">
-          <Link href="/wallet" className="text-purple-400 font-semibold">
-            ウォレット
-          </Link>
-          <Link href="/send" className="text-gray-300 hover:text-white transition-colors">
-            送金
-          </Link>
-          <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
-            について
-          </Link>
-        </div>
-      </nav>
+      <Navigation />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 pb-24">
         {/* Wallet Header */}
@@ -70,11 +51,55 @@ export default function WalletPage() {
           <p className="text-gray-400">zk-SNARKs で保護された残高と取引履歴</p>
         </div>
 
-        {/* Balance Card */}
+        {/* Wallet Connection Status */}
+        <div className="mb-8">
+          <WalletStatus />
+        </div>
+
+        {/* Public Balance Card */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Wallet className="h-6 w-6 text-blue-400" />
+              <h2 className="text-xl font-semibold text-white">パブリック残高</h2>
+            </div>
+            {isLoading && (
+              <RefreshCw className="h-5 w-5 text-blue-400 animate-spin" />
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {balances.map((token) => (
+              <div
+                key={token.symbol}
+                className="p-4 rounded-xl border border-white/20 bg-black/20"
+              >
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="text-2xl">{token.icon}</span>
+                  <div>
+                    <p className="text-white font-semibold">{token.symbol}</p>
+                    <p className="text-gray-400 text-sm">{token.name}</p>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-white">
+                  {token.isLoading ? (
+                    <span className="text-gray-400">読み込み中...</span>
+                  ) : token.error ? (
+                    <span className="text-red-400">エラー</span>
+                  ) : (
+                    token.formatted
+                  )}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Shielded Balance Card */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <Wallet className="h-6 w-6 text-purple-400" />
+              <Shield className="h-6 w-6 text-purple-400" />
               <h2 className="text-xl font-semibold text-white">シールド残高</h2>
             </div>
             <button
@@ -90,7 +115,7 @@ export default function WalletPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {tokens.map((token) => (
+            {balances.map((token) => (
               <button
                 key={token.symbol}
                 onClick={() => setSelectedToken(token.symbol)}
@@ -100,13 +125,19 @@ export default function WalletPage() {
                     : 'border-white/20 hover:border-white/30'
                 }`}
               >
-                <div className="text-left">
-                  <p className="text-white font-semibold">{token.symbol}</p>
-                  <p className="text-gray-400 text-sm">{token.name}</p>
-                  <p className="text-2xl font-bold text-white mt-2">
-                    {isBalanceVisible ? token.shieldedBalance : '***'}
-                  </p>
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="text-2xl">{token.icon}</span>
+                  <div className="text-left">
+                    <p className="text-white font-semibold">{token.symbol}</p>
+                    <p className="text-gray-400 text-sm">{token.name}</p>
+                  </div>
                 </div>
+                <p className="text-2xl font-bold text-white text-left">
+                  {isBalanceVisible 
+                    ? jpycShieldedBalance
+                    : '***'
+                  }
+                </p>
               </button>
             ))}
           </div>
