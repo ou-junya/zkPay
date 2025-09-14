@@ -6,13 +6,14 @@ import {
   getDefaultConfig,
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, http } from 'wagmi';
 import {
   mainnet,
   polygon,
   optimism,
   arbitrum,
   base,
+  localhost,
 } from 'wagmi/chains';
 import {
   QueryClientProvider,
@@ -22,7 +23,12 @@ import {
 const config = getDefaultConfig({
   appName: 'zkPay',
   projectId: process.env.NEXT_PUBLIC_PROJECT_ID || 'zkpay-demo-project',
-  chains: [mainnet, polygon, optimism, arbitrum, base],
+  // Add localhost for connecting to a local Hardhat/Anvil node
+  chains: [mainnet, polygon, optimism, arbitrum, base, localhost],
+  // Ensure Wagmi knows how to talk to the local node
+  transports: {
+    [localhost.id]: http(process.env.NEXT_PUBLIC_LOCAL_RPC || 'http://127.0.0.1:8545'),
+  },
   ssr: true, // Enable SSR for better performance
 });
 
