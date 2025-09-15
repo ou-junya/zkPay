@@ -5,6 +5,7 @@ import { Shield, ArrowRight, AlertCircle, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Navigation } from '@/components/Navigation';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { useRailgunShieldedBalance } from '@/hooks/useRailgunBalance';
 
 export default function SendPage() {
   const [recipient, setRecipient] = useState('');
@@ -13,9 +14,15 @@ export default function SendPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: form, 2: confirm, 3: processing, 4: success
   const { balances, isConnected } = useTokenBalances();
-
-  // シールド残高（ダミーデータ）
-  const jpycShieldedBalance = '75,000';
+  
+  // シールド残高を取得
+  const { 
+    formattedBalance: jpycShieldedBalance, 
+    shieldedBalance: jpycShieldedBalanceRaw,
+    isLoading: isShieldedLoading, 
+    error: shieldedError,
+    hasBalance
+  } = useRailgunShieldedBalance();
 
   const handleSend = async () => {
     setStep(3);
@@ -37,6 +44,11 @@ export default function SendPage() {
 
   const selectedTokenBalance = jpycShieldedBalance;
   const selectedTokenData = balances.find(token => token.symbol === selectedToken);
+  
+  // 送金可能かチェック
+  const canSend = recipient && amount && parseFloat(amount) > 0 && 
+                  parseFloat(jpycShieldedBalanceRaw) >= parseFloat(amount) && 
+                  hasBalance;
 
   if (!isConnected) {
     return (
@@ -113,7 +125,7 @@ export default function SendPage() {
                   >
                     {balances.map((token) => (
                       <option key={token.symbol} value={token.symbol} className="bg-slate-800">
-                        {token.symbol} (シールド残高: {jpycShieldedBalance})
+                        {token.symbol} (シールド残高: {isShieldedLoading ? '読み込み中...' : jpycShieldedBalance})
                       </option>
                     ))}
                   </select>
@@ -136,7 +148,13 @@ export default function SendPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">使用可能残高:</span>
                   <span className="text-white font-semibold">
-                    {selectedTokenBalance} {selectedToken}
+                    {isShieldedLoading ? (
+                      <span className="text-gray-400">読み込み中...</span>
+                    ) : shieldedError ? (
+                      <span className="text-red-400">エラー</span>
+                    ) : (
+                      `${selectedTokenBalance} ${selectedToken}`
+                    )}
                   </span>
                 </div>
                 {selectedTokenData && (
@@ -147,6 +165,16 @@ export default function SendPage() {
                     </span>
                   </div>
                 )}
+                {!hasBalance && !isShieldedLoading && (
+                  <div className="mt-2 p-2 bg-yellow-900/20 border border-yellow-700/30 rounded text-yellow-400 text-sm">
+                    シールド残高がありません。まず資金をシールドしてください。
+                  </div>
+                )}
+                {amount && parseFloat(amount) > parseFloat(jpycShieldedBalanceRaw) && (
+                  <div className="mt-2 p-2 bg-red-900/20 border border-red-700/30 rounded text-red-400 text-sm">
+                    残高が不足しています（最大: {selectedTokenBalance} {selectedToken}）
+                  </div>
+                )}
               </div>
 
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
@@ -154,18 +182,26 @@ export default function SendPage() {
                   <AlertCircle className="h-5 w-5 text-yellow-400 mt-0.5" />
                   <div className="text-yellow-200 text-sm">
                     <p className="font-medium mb-1">プライバシー保護について</p>
-                    <p>この送金は zk-SNARKs により完全に匿名化されます。送金者、受信者、金額の情報がブロックチェーン上で秘匿されます。</p>
+                    <p className="mb-2">この送金は zk-SNARKs により完全に匿名化されます。送金者、受信者、金額の情報がブロックチェーン上で秘匿されます。</p>
+                    <p className="text-xs text-yellow-300">
+                      ※ プライベート送金は「シールド残高」から行われます。パブリック残高（ウォレット残高）は変更されません。
+                      パブリック残高を変更するには、シールド/アンシールド操作を使用してください。
+                    </p>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setStep(2)}
-                disabled={!recipient || !amount || Number(amount) <= 0}
+                disabled={!canSend || isShieldedLoading}
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
-                <span>内容を確認</span>
-                <ArrowRight className="h-5 w-5" />
+                <span>
+                  {isShieldedLoading ? '残高確認中...' : 
+                   !hasBalance ? 'シールド残高がありません' :
+                   !canSend ? '内容を確認' : '内容を確認'}
+                </span>
+                {!isShieldedLoading && canSend && <ArrowRight className="h-5 w-5" />}
               </button>
             </div>
           )}
@@ -236,7 +272,15 @@ export default function SendPage() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-white mb-2">送金完了！</h3>
-                <p className="text-gray-400">プライベート送金が正常に完了しました。</p>
+                <p className="text-gray-400 mb-4">プライベート送金が正常に完了しました。</p>
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-sm text-blue-200">
+                  <p className="font-medium mb-1">💡 残高について</p>
+                  <p>
+                    プライベート送金では「シールド残高」から送金されます。
+                    あなたのパブリック残高（ウォレット残高）は変更されません。
+                    これはRailgunのプライバシー保護機能の正常な動作です。
+                  </p>
+                </div>
               </div>
               <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
                 <p className="text-green-200 text-sm">

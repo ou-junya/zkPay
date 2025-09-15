@@ -5,15 +5,37 @@ import { Shield, Wallet, Copy, Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Plus, R
 import Link from 'next/link';
 import { Navigation } from '@/components/Navigation';
 import { WalletStatus } from '@/components/WalletStatus';
+import { ShieldModal } from '@/components/ShieldModal';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { useRailgunShieldedBalance } from '@/hooks/useRailgunBalance';
 
 export default function WalletPage() {
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [selectedToken, setSelectedToken] = useState('JPYC');
-  const { balances, isLoading } = useTokenBalances();
+  const [isShieldModalOpen, setIsShieldModalOpen] = useState(false);
+  const { balances, isLoading, refetch } = useTokenBalances();
+  
+  // シールド残高（実際の Railgun SDK を使用）
+  const { 
+    formattedBalance: jpycShieldedBalance, 
+    isLoading: isShieldedLoading, 
+    error: shieldedError, 
+    refetch: refetchShielded 
+  } = useRailgunShieldedBalance();
 
-  // シールド残高（ダミーデータ）
-  const jpycShieldedBalance = '75,000';
+  const handleRefresh = () => {
+    if (refetch) {
+      refetch();
+    }
+    if (refetchShielded) {
+      refetchShielded();
+    }
+  };
+
+  const handleShieldSuccess = () => {
+    // シールド成功後にすべての残高を更新
+    handleRefresh();
+  };
 
   const transactions = [
     {
@@ -63,35 +85,58 @@ export default function WalletPage() {
               <Wallet className="h-6 w-6 text-blue-400" />
               <h2 className="text-xl font-semibold text-white">パブリック残高</h2>
             </div>
-            {isLoading && (
-              <RefreshCw className="h-5 w-5 text-blue-400 animate-spin" />
-            )}
+            <div className="flex items-center space-x-2">
+              <p className="text-xs text-gray-400">
+                通常のウォレット残高 • プライベート送金では変更されません
+              </p>
+              {isLoading && (
+                <RefreshCw className="h-5 w-5 text-blue-400 animate-spin" />
+              )}
+              <button
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-5 w-5 text-blue-400 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {balances.map((token) => (
-              <div
-                key={token.symbol}
-                className="p-4 rounded-xl border border-white/20 bg-black/20"
-              >
-                <div className="flex items-center space-x-3 mb-2">
-                  <span className="text-2xl">{token.icon}</span>
-                  <div>
-                    <p className="text-white font-semibold">{token.symbol}</p>
-                    <p className="text-gray-400 text-sm">{token.name}</p>
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-white">
-                  {token.isLoading ? (
-                    <span className="text-gray-400">読み込み中...</span>
-                  ) : token.error ? (
-                    <span className="text-red-400">エラー</span>
-                  ) : (
-                    token.formatted
-                  )}
-                </p>
+            {balances.length === 0 ? (
+              <div className="col-span-full p-4 rounded-xl border border-white/20 bg-black/20 text-center">
+                <p className="text-gray-400">ウォレットが接続されていません</p>
               </div>
-            ))}
+            ) : (
+              balances.map((token) => (
+                <div
+                  key={token.symbol}
+                  className="p-4 rounded-xl border border-white/20 bg-black/20"
+                >
+                  <div className="flex items-center space-x-3 mb-2">
+                    <span className="text-2xl">{token.icon}</span>
+                    <div>
+                      <p className="text-white font-semibold">{token.symbol}</p>
+                      <p className="text-gray-400 text-sm">{token.name}</p>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-white">
+                    {token.isLoading ? (
+                      <span className="text-gray-400">読み込み中...</span>
+                    ) : token.error ? (
+                      <span className="text-red-400">エラー</span>
+                    ) : (
+                      token.formatted
+                    )}
+                  </p>
+                  {token.error && (
+                    <p className="text-red-400 text-xs mt-1">
+                      残高の取得に失敗しました
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -100,7 +145,12 @@ export default function WalletPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Shield className="h-6 w-6 text-purple-400" />
-              <h2 className="text-xl font-semibold text-white">シールド残高</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-white">シールド残高</h2>
+                <p className="text-xs text-gray-400">
+                  プライベート送金に使用される残高 • zk-SNARKs で保護
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setIsBalanceVisible(!isBalanceVisible)}
@@ -133,11 +183,23 @@ export default function WalletPage() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-white text-left">
-                  {isBalanceVisible 
-                    ? jpycShieldedBalance
-                    : '***'
-                  }
+                  {isBalanceVisible ? (
+                    isShieldedLoading ? (
+                      <span className="text-gray-400">読み込み中...</span>
+                    ) : shieldedError ? (
+                      <span className="text-red-400">0.00</span>
+                    ) : (
+                      `${jpycShieldedBalance} JPYC`
+                    )
+                  ) : (
+                    '***'
+                  )}
                 </p>
+                {shieldedError && isBalanceVisible && (
+                  <p className="text-red-400 text-xs mt-1">
+                    シールド残高の取得に失敗
+                  </p>
+                )}
               </button>
             ))}
           </div>
@@ -151,7 +213,10 @@ export default function WalletPage() {
               <ArrowUpRight className="h-5 w-5" />
               <span>送金</span>
             </Link>
-            <button className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <button 
+              onClick={() => setIsShieldModalOpen(true)}
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+            >
               <ArrowDownLeft className="h-5 w-5" />
               <span>シールド</span>
             </button>
@@ -218,6 +283,13 @@ export default function WalletPage() {
           </div>
         </div>
       </div>
+
+      {/* Shield Modal */}
+      <ShieldModal
+        isOpen={isShieldModalOpen}
+        onClose={() => setIsShieldModalOpen(false)}
+        onSuccess={handleShieldSuccess}
+      />
     </div>
   );
 }
